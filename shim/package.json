@@ -1,0 +1,17 @@
+{
+  "name": "mtls-socks5-shim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --loader ts-node/esm src/index.ts",
+    "build": "tsc -p .",
+    "start": "node dist/index.js",
+    "lint": "echo \"(add eslint later)\""
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "ts-node": "^10.9.2"
+  }
+}

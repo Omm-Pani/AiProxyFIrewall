@@ -1,0 +1,24 @@
+{
+  "local": {
+    "listenHost": "127.0.0.1",
+    "listenPort": 1080
+  },
+  "gateway": {
+    "host": "127.0.0.1",
+    "port": 8443,
+    "servername": "mtls-socks5.local"
+  },
+  "certs": {
+    "clientP12Path": "./certs/client-keystore.p12",
+    "clientP12Pass": "password",
+    "serverCaPemPath": "./certs/server.crt"
+  },
+  "timeouts": {
+    "connectMs": 8000,
+    "idleReadMs": 300000,
+    "idleWriteMs": 300000
+  },
+  "logging": {
+    "level": "info"
+  }
+}

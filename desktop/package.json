@@ -1,0 +1,22 @@
+{
+  "name": "vpn-like-proxy-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron tray app that controls a local SOCKS5 shim and toggles system PAC/Proxy.",
+  "main": "dist/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc -w & electron .",
+    "build": "tsc -p . && node scripts/copy-assets.cjs",
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "electron-log": "^5.2.0"
+  },
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.6.3"
+  }
+}

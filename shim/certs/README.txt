@@ -1,0 +1,1 @@
+Place client.p12 and server.crt here.

@@ -1,0 +1,13 @@
+appId: com.example.vpnlikeproxy
+productName: VPN-Like Proxy
+files:
+  - "dist/**"
+  - "pac/**"
+asar: true
+mac:
+  category: public.app-category.utilities
+  target:
+    - dmg
+win:
+  target:
+    - nsis
