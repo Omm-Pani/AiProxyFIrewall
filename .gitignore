@@ -5,8 +5,8 @@
 *.jks
 *.pem
 *.key
-certs/client-keystore.p12
-certs/server-keystore.p12
+shim/certs/client-keystore.p12
+shim/certs/server-keystore.p12
 Gateway/client-keystore.p12
 Gateway/server-keystore.p12
 Gateway/server-truststore.p12
