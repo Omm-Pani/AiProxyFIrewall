@@ -71,3 +71,23 @@ export async function setSystemProxyOff(): Promise<void> {
   }
   throw new Error("Unsupported platform for system proxy toggle.");
 }
+export async function setManualSocksOn(
+  host: string,
+  port: number
+): Promise<void> {
+  const platform = os.platform();
+  if (platform === "darwin") {
+    const svc = await resolveServiceName();
+    // This command sets the IP/Port AND turns the state to "On" automatically
+    // Command: networksetup -setsocksfirewallproxy "Wi-Fi" 127.0.0.1 1080
+    await run(`networksetup -setsocksfirewallproxy "${svc}" ${host} ${port}`);
+    // Ensure it is definitely on (redundancy is good here)
+    await run(`networksetup -setsocksfirewallproxystate "${svc}" on`);
+    return;
+  } else if (platform === "win32") {
+    // Windows implementation would go here (Registry/WinINET)
+    console.warn("Windows manual proxy not implemented yet");
+    return;
+  }
+  throw new Error("Unsupported platform for system proxy toggle.");
+}

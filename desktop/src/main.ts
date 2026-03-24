@@ -12,7 +12,11 @@ import { fileURLToPath } from "url";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import log from "electron-log/main.js";
 import { ensurePac } from "./proxy/pac.js";
-import { setSystemProxyOn, setSystemProxyOff } from "./proxy/systemProxy.js";
+import {
+  setSystemProxyOn,
+  setSystemProxyOff,
+  setManualSocksOn,
+} from "./proxy/systemProxy.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -120,7 +124,7 @@ async function disableProxy() {
   }
 }
 
-function startShim() {
+async function startShim() {
   if (shimRunning) return;
   // Sanity: check the file exists
   const entry = path.join(SHIM_DIR, SHIM_ARGS[0]);
@@ -152,20 +156,57 @@ function startShim() {
     log.error("[shim-err]", s);
     win?.webContents.send("log", s);
   });
+
+  try {
+    // Parse "127.0.0.1:1080" -> host, port
+    const [host, portStr] = LOCAL_SOCKS.split(":");
+    const port = parseInt(portStr, 10);
+
+    // Enable the OS Proxy settings automatically
+    await setManualSocksOn(host, port);
+
+    log.info(`System SOCKS proxy enabled at ${host}:${port}`);
+    win?.webContents.send("status", { type: "proxy", value: "on (manual)" });
+  } catch (e: any) {
+    log.error("Failed to set system proxy:", e);
+    dialog.showErrorBox(
+      "Proxy Error",
+      "Shim started, but failed to set system proxy.\n" + e.message
+    );
+  }
+
   shim.on("exit", (code) => {
     shimRunning = false;
     log.warn("shim exited", code);
+
+    // Safety: Ensure proxy is off if shim crashes unexpectedly
+    setSystemProxyOff().catch((err) =>
+      log.error("Failed to cleanup proxy on crash", err)
+    );
+
     win?.webContents.send("status", { type: "shim", value: "stopped" });
     updateTrayConnectLabel();
   });
 }
 
-function stopShim() {
+async function stopShim() {
   if (!shim) return;
   log.info("Stopping shim");
   try {
     shim.kill("SIGTERM");
   } catch {}
+
+  try {
+    await setSystemProxyOff();
+    log.info("System proxy settings reverted.");
+    win?.webContents.send("status", { type: "proxy", value: "off" });
+  } catch (e) {
+    log.error("Failed to revert proxy settings:", e);
+  }
+
+  shim = null; // Cleanup variable
+  shimRunning = false;
+  updateTrayConnectLabel();
 }
 
 function toggleShim() {
@@ -204,11 +245,11 @@ function updateTrayConnectLabel() {
 
 // IPC to wire window buttons
 ipcMain.handle("shim:start", async () => {
-  startShim();
+  await startShim();
   return true;
 });
 ipcMain.handle("shim:stop", async () => {
-  stopShim();
+  await stopShim();
   return true;
 });
 ipcMain.handle("proxy:on", async () => {

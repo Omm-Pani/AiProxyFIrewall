@@ -42,6 +42,14 @@ function readN(sock, n) {
         tryRead(); // in case data already buffered
     });
 }
+const PROXIED_DOMAINS = [
+    "ipinfo.io", // Example: Check IP to verify proxy works
+    "example.com", // Example: Specific internal site
+];
+function shouldProxy(host) {
+    // Check for exact match or subdomain match
+    return PROXIED_DOMAINS.some((d) => host === d || host.endsWith("." + d));
+}
 async function handleClient(client, opts) {
     const id = client.remoteAddress + ":" + client.remotePort;
     logger.info("client connect", { id });
@@ -99,24 +107,61 @@ async function handleClient(client, opts) {
         }
         const pbuf = await readN(client, 2);
         port = (pbuf[0] << 8) | pbuf[1];
-        // Connect upstream mTLS
-        const up = await connectUpstream({
-            host: opts.upstreamHost,
-            port: opts.upstreamPort,
-            servername: opts.servername,
-            p12Path: opts.p12Path,
-            p12Pass: opts.p12Pass,
-            caPath: opts.caPath,
-            connectTimeoutMs: opts.connectTimeoutMs,
-        });
-        // Perform upstream SOCKS5 CONNECT (prefer DOMAIN to force server-side DNS)
-        await socks5UpstreamConnect(up, host, port);
-        // Reply success locally (use 0.0.0.0:0 for simplicity)
+        let targetSocket = null;
+        if (shouldProxy(host)) {
+            logger.info("Routing via VPN Tunnel", { host });
+            // Existing Upstream Logic
+            const up = await connectUpstream({
+                host: opts.upstreamHost,
+                port: opts.upstreamPort,
+                servername: opts.servername,
+                p12Path: opts.p12Path,
+                p12Pass: opts.p12Pass,
+                caPath: opts.caPath,
+                connectTimeoutMs: opts.connectTimeoutMs,
+            });
+            // Perform SOCKS5 handshake with the Gateway
+            await socks5UpstreamConnect(up, host, port);
+            targetSocket = up;
+        }
+        else {
+            logger.info("Routing Direct to Internet", { host });
+            // New Direct Connect Logic
+            // We create a standard TCP connection from the local machine
+            targetSocket = await new Promise((resolve, reject) => {
+                const s = net.connect(port, host, () => {
+                    resolve(s);
+                });
+                s.on("error", reject);
+                s.setTimeout(10000, () => {
+                    s.destroy(new Error("Direct connect timeout"));
+                });
+            });
+        }
+        // Reply success to the local client (Browser)
+        // This tells the browser "Connection established, go ahead"
         client.write(Buffer.from([0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0]));
-        logger.info("local CONNECT ok", { id, host, port });
-        // Pipe both ways
-        await bidirectionalPipe(client, up);
-        logger.info("client done", { id });
+        // Pipe data
+        await bidirectionalPipe(client, targetSocket);
+        logger.info("client done", { id: client.remoteAddress });
+        // Connect upstream mTLS
+        // const up = await connectUpstream({
+        //   host: opts.upstreamHost,
+        //   port: opts.upstreamPort,
+        //   servername: opts.servername,
+        //   p12Path: opts.p12Path,
+        //   p12Pass: opts.p12Pass,
+        //   caPath: opts.caPath,
+        //   connectTimeoutMs: opts.connectTimeoutMs,
+        // });
+        // // Perform upstream SOCKS5 CONNECT (prefer DOMAIN to force server-side DNS)
+        // await socks5UpstreamConnect(up, host, port);
+        // // Reply success locally (use 0.0.0.0:0 for simplicity)
+        // client.write(Buffer.from([0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0]));
+        // logger.info("local CONNECT ok", { id, host, port });
+        // // Pipe both ways
+        // await bidirectionalPipe(client, up);
+        // logger.info("client done", { id });
     }
     catch (e) {
         logger.warn("client error", { id, err: e?.message || String(e) });

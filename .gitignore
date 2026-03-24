@@ -1,0 +1,36 @@
+# =========================
+# CRITICAL SECURITY FILES
+# =========================
+*.p12
+*.jks
+*.pem
+*.key
+certs/client-keystore.p12
+certs/server-keystore.p12
+Gateway/client-keystore.p12
+Gateway/server-keystore.p12
+Gateway/server-truststore.p12
+Gateway/client-truststore.p12
+.env
+
+# =========================
+# Node.js & Electron
+# =========================
+node_modules/
+dist/
+release/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Java & IDEs
+# =========================
+*.class
+*.jar
+Gateway/*.class
+.idea/
+*.iml
+.vscode/
+.DS_Store
