@@ -31,8 +31,6 @@ Open your terminal and create a temporary folder for your certificates:
 mkdir certs-build && cd certs-build
 ```
 
-````
-
 ### 1. Create your root Certificate Authority (CA)
 
 ```bash
@@ -157,4 +155,7 @@ The desktop app gives you a system tray icon to easily connect/disconnect withou
 - **Never commit `.p12` or `.key` files to version control.** A strict `.gitignore` is required.
 - Ensure your server firewall only leaves your defined gateway port (e.g., `10800`) open.
 - The Gateway actively blocks outbound traffic to Port 25 (SMTP) by default via an internal ACL to prevent email spam abuse.
-````
+
+```
+
+```
