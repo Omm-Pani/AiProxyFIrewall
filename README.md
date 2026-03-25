@@ -1,8 +1,3 @@
-Here is the fully corrected `README.md` file. I have removed all the escaping backslashes and cleaned up a few invisible non-breaking spaces that were hiding before the backticks in Steps 2, 3, and 4 so everything formats perfectly.
-
-You can click the "Copy code" button in the top right corner of the block below and paste it directly into your file:
-
-````markdown
 # Zero-Trust mTLS SOCKS5 Proxy & Desktop Client
 
 A highly secure, split-tunneling SOCKS5 proxy ecosystem. This project replaces standard, unencrypted SOCKS5 password authentication with a **Mutual TLS (mTLS)** tunnel, ensuring that only cryptographically verified clients can access the network gateway.
@@ -35,6 +30,7 @@ Open your terminal and create a temporary folder for your certificates:
 ```bash
 mkdir certs-build && cd certs-build
 ```
+
 ````
 
 ### 1. Create your root Certificate Authority (CA)
@@ -161,3 +157,4 @@ The desktop app gives you a system tray icon to easily connect/disconnect withou
 - **Never commit `.p12` or `.key` files to version control.** A strict `.gitignore` is required.
 - Ensure your server firewall only leaves your defined gateway port (e.g., `10800`) open.
 - The Gateway actively blocks outbound traffic to Port 25 (SMTP) by default via an internal ACL to prevent email spam abuse.
+````
